@@ -27,10 +27,12 @@ go get -u github.com/cloudmatelabs/gflatten
 
 ## Usage
 
+### Insert Map
+
 ```go
 import "github.com/cloudmatelabs/gflatten"
 
-var src = map[string]any{
+src := map[string]any{
 	"foo": []any{
 		"bar", "baz",
 	},
@@ -73,3 +75,59 @@ dest = map[string]any{
 }
 */
 ```
+
+### Insert Struct
+
+```go
+import "github.com/cloudmatelabs/gflatten"
+
+type bar struct {
+	Baz string `json:"baz"`
+}
+type foobar struct {
+	Foo []bar `json:"foo"`
+}
+type input struct {
+	Foo    []string `json:"foo"`
+	Foobar foobar   `json:"foobar"`
+}
+
+src := input{
+	Foo: []string{"bar", "baz"},
+	Foobar: foobar{
+		Foo: []bar{
+			{Baz: "baz"},
+			{Baz: "foobar"},
+		},
+	},
+}
+option := gflatten.Option{
+  ParameterDelimiter: ".",
+  ArrayWrap:          gflatten.WRAP.SQUARE_BRACKET,
+}
+dest, err := gflatten.Flatten(src, option)
+/*
+dest = map[string]any{
+  "foo[0]":            "bar",
+	"foo[1]":            "baz",
+	"foobar.foo[0].baz": "baz",
+	"foobar.foo[1].baz": "foobar",
+}
+*/
+```
+
+## Option
+
+- Prefix(optional)
+- ParameterDelimiter(optional)
+- ArrayDelimiter(optional)
+- ParameterWrap(optional) -> gflatten.WRAP
+- ArrayWrap(optional) -> gflatten.WRAP
+
+### gflatten.WRAP
+
+- SQUARE_BRACKET: []
+- SINGLE_QUOTE: ''
+- DOUBLE_QUOTE: ""
+- BACKTICK: ``
+- NONE

@@ -64,7 +64,40 @@ func TestFlattenMySQLStyle(t *testing.T) {
 	})
 }
 
-func flattenTest(t *testing.T, src map[string]any, option gflatten.Option, expect map[string]any) {
+func TestFlattenStructInput(t *testing.T) {
+	type bar struct {
+		Baz string `json:"baz"`
+	}
+	type foobar struct {
+		Foo []bar `json:"foo"`
+	}
+	type input struct {
+		Foo    []string `json:"foo"`
+		Foobar foobar   `json:"foobar"`
+	}
+
+	src := input{
+		Foo: []string{"bar", "baz"},
+		Foobar: foobar{
+			Foo: []bar{
+				{Baz: "baz"},
+				{Baz: "foobar"},
+			},
+		},
+	}
+	option := gflatten.Option{
+		ParameterDelimiter: ".",
+		ArrayWrap:          gflatten.WRAP.SQUARE_BRACKET,
+	}
+	flattenTest(t, src, option, map[string]any{
+		"foo[0]":            "bar",
+		"foo[1]":            "baz",
+		"foobar.foo[0].baz": "baz",
+		"foobar.foo[1].baz": "foobar",
+	})
+}
+
+func flattenTest(t *testing.T, src any, option gflatten.Option, expect map[string]any) {
 	dest, err := gflatten.Flatten(src, option)
 	if err != nil {
 		t.Fatalf("Error: %v", err)
